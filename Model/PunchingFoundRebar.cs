@@ -4,6 +4,8 @@ using Autodesk.Revit.DB.Structure;
 using Autodesk.Revit.UI;
 using Autodesk.Revit.UI.Events;
 using Autodesk.Revit.UI.Selection;
+using PunchingFoundRebarModule.View;
+using PunchingFoundRebarModule.ViewModel;
 using System;
 using System.Collections.Generic;
 using System.Data.Common;
@@ -18,7 +20,6 @@ namespace PunchingFoundRebarModule.Model
     [Transaction(TransactionMode.Manual)]
     public class PunchingFoundRebar : IExternalCommand
     {
-        internal static bool IsColumnInModel {  get; set; }
         internal static bool IsRebarCoverFromModel { get; set; }
 
         internal static double Step {  get; set; }
@@ -33,7 +34,6 @@ namespace PunchingFoundRebarModule.Model
             Document doc = uidoc.Document;
 
             //Для примера, потом убрать
-            IsColumnInModel = false;
             IsRebarCoverFromModel = false;
 
             Step = 100 / 304.8;
@@ -45,14 +45,25 @@ namespace PunchingFoundRebarModule.Model
             //
 
 
-
-
             try
             {
+                ColumnSelectWindowVM columnSelectWindowVM = new ColumnSelectWindowVM();
+                ColumnSelectWindow columnSelectWindow = new ColumnSelectWindow()
+                {
+                    DataContext = columnSelectWindowVM
+                };
+
+                bool? columnSelectWindowResult = columnSelectWindow.ShowDialog();
+                
+                if (columnSelectWindowResult != true)
+                {
+                    return Result.Cancelled;
+                }
+
                 //Выбор пилонов, под которыми будут размещаться каркасы
                 List<Column> columns = new List<Column>();
 
-                if (IsColumnInModel)
+                if (columnSelectWindowVM.IsColumnInModel)
                 {
                     IList<Reference> columnsFromModelReferences = uidoc.Selection.PickObjects(ObjectType.Element, new ColumnFromModelFilter(), "Выберите пилоны");
 
@@ -71,6 +82,18 @@ namespace PunchingFoundRebarModule.Model
                         Document linkedDoc = link.GetLinkDocument();
                         columns.Add(new Column(linkedDoc.GetElement(reference.LinkedElementId)));
                     }
+                }
+
+                MainWindowVM mainWindowVM = new MainWindowVM();
+                MainWindow mainWindow = new MainWindow()
+                {
+                    DataContext = mainWindowVM,
+                };
+
+                bool? mainWindowResult = mainWindow.ShowDialog();
+                if (mainWindowResult != true)
+                {
+                    return Result.Cancelled;
                 }
 
                 //Выбор фундаментной плиты, в которой будут размещаться каркасы
