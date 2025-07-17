@@ -56,6 +56,9 @@
       <HintPath>C:\Program Files\Autodesk\Revit 2022\RevitAPIUI.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="RevitTools">
+      <HintPath>..\RevitTools\bin\Debug\RevitTools.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Runtime.CompilerServices.Unsafe, Version=4.0.4.1, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
@@ -79,10 +82,13 @@
     <Compile Include="Model\FoundationSlabFilter.cs" />
     <Compile Include="Model\ColumnFromModelFilter.cs" />
     <Compile Include="Model\PunchingFoundRebar.cs" />
-    <Compile Include="Model\PunchingFoundRebarTools.cs" />
+    <Compile Include="Model\PunchingRebarGeometryCalculator.cs" />
+    <Compile Include="Model\RebarParameters.cs" />
+    <Compile Include="Model\PunchingRebarPlacementService.cs" />
     <Compile Include="Model\PunchingRebar.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ViewModel\ColumnSelectWindowVM.cs" />
+    <Compile Include="ViewModel\IntegerValidationRule.cs" />
     <Compile Include="ViewModel\MainWindowVM.cs" />
     <Compile Include="View\ColumnSelectWindow.xaml.cs">
       <DependentUpon>ColumnSelectWindow.xaml</DependentUpon>

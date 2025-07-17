@@ -1,6 +1,7 @@
 ﻿using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.Structure;
 using Autodesk.Revit.UI;
+using RevitTools;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,13 +13,14 @@ using System.Xml.Linq;
 
 namespace PunchingFoundRebarModule.Model
 {
-    internal class PunchingFoundRebarTools
+    internal class PunchingRebarPlacementService
     {
         static internal void AddPunchingRebarToFoundation
             (Document doc, 
             Element foundationSlab, 
             Column column,
-            double step,
+            double stirrupStep,
+            double frameStep,
             double rebarDiameter,
             double backRebarDiameter,
             double rebarCoverUp,
@@ -27,7 +29,7 @@ namespace PunchingFoundRebarModule.Model
             string familyName = "IFC_Каркас_КГор_1";
             string familyType = "Х_1501";
 
-            double longRebarDiameter = 10 / 304.8; // диаметр продольной арматуры каркаса
+            double longRebarDiameter = Calculator.FromMmToFeet(10); // диаметр продольной арматуры каркаса
 
             FilteredElementCollector FEC = new FilteredElementCollector(doc).OfClass(typeof(FamilySymbol));
             FamilySymbol punchingRebarFS = FEC.ToElements().Cast<FamilySymbol>()
@@ -49,11 +51,11 @@ namespace PunchingFoundRebarModule.Model
 
                 // ПОД КАРКАСОМ С УГЛОМ 90 ПОНИМАЕТСЯ КАРКАС, ТОРЕЦ КОТОРОГО ЛЕЖИТ ПАРАЛЛЕЛЬНО КОРОТКОЙ СТОРОНЕ ПИЛОНА
 
-                double punchingRebarHeight = GetFoundationSlabHeight(foundationSlab) - (rebarCoverUp + backRebarDiameter) - (rebarCoverDown + 2 * backRebarDiameter) - longRebarDiameter;
-                int stirrupCount = Convert.ToInt32(GetFrameLength(foundationSlab, step, rebarCoverDown, backRebarDiameter) / step) + 1;
+                double punchingRebarHeight = PunchingRebarGeometryCalculator.GetFoundationSlabHeight(foundationSlab) - (rebarCoverUp + backRebarDiameter) - (rebarCoverDown + 2 * backRebarDiameter) - longRebarDiameter;
+                int stirrupCount = Convert.ToInt32(PunchingRebarGeometryCalculator.GetFrameLength(foundationSlab, stirrupStep, rebarCoverDown, backRebarDiameter) / stirrupStep) + 1;
 
                 // Создние каркаса в первом направлении (торцы каркасов идут вдоль длиннной стороны пилона)
-                PunchingRebar punchingRebar0 = new PunchingRebar(punchingRebarFS, column.Location, step, rebarDiameter, longRebarDiameter, punchingRebarHeight, stirrupCount);
+                PunchingRebar punchingRebar0 = new PunchingRebar(punchingRebarFS, column.Location, stirrupStep, rebarDiameter, longRebarDiameter, punchingRebarHeight, stirrupCount);
 
                 MoveFamilyInstanceDown(punchingRebar0, longRebarDiameter, rebarDiameter, rebarCoverUp, backRebarDiameter);
                 RotateFamilyInstance(punchingRebar0, column.FacingOrientation.AngleTo(punchingRebar0.FamilyInstance.FacingOrientation));
@@ -91,8 +93,6 @@ namespace PunchingFoundRebarModule.Model
 
                 Element element90 = MirrorRebar(punchingRebar90, column, true);
                 CopyRebar((FamilyInstance)element90, -copyOrientation, punchingRebarCount90, step * 2);
-
-                //MessageBox.Show(GetPunchingRebarCount0(column, step, foundationSlab, rebarCoverDown, backRebarDiameter).ToString());
             }
         }
         
@@ -183,13 +183,13 @@ namespace PunchingFoundRebarModule.Model
 
             if (isAngle90)
             {
-                double afterColumnDistance = GetAfterColumnDistance(foundationSlab, rebarCoverDown, backRebarDiameter);
+                double afterColumnDistance = PunchingRebarGeometryCalculator.GetAfterColumnDistance(foundationSlab, rebarCoverDown, backRebarDiameter);
                 punchingLength = column.Width + 2 * afterColumnDistance;
                 punchingRebarCount = Convert.ToInt32(Math.Floor(punchingLength / (2 * step)));
             }
             else
             {
-                double punchingZone = GetPunchingZone(foundationSlab, rebarCoverDown, backRebarDiameter);
+                double punchingZone = PunchingRebarGeometryCalculator.GetPunchingZone(foundationSlab, rebarCoverDown, backRebarDiameter);
                 punchingLength = column.Length + 2 * punchingZone;
                 punchingRebarCount = Convert.ToInt32(Math.Ceiling(punchingLength / (2 * step))) + 1;
             }
@@ -214,8 +214,8 @@ namespace PunchingFoundRebarModule.Model
             if (isAngle90)
             {
                 int punchingRebarCount90 = GetPunchingRebarCount(column, step, foundationSlab, rebarCoverDown, backRebarDiameter, true);
-                double length = GetFrameLength(foundationSlab, step, rebarCoverDown, backRebarDiameter);
-                double afterColumnDistance = GetAfterColumnDistance(foundationSlab, rebarCoverDown, backRebarDiameter);
+                double length = PunchingRebarGeometryCalculator.GetFrameLength(foundationSlab, step, rebarCoverDown, backRebarDiameter);
+                double afterColumnDistance = PunchingRebarGeometryCalculator.GetAfterColumnDistance(foundationSlab, rebarCoverDown, backRebarDiameter);
 
                 startPoint = punchingRebar.Location;
 
@@ -266,20 +266,20 @@ namespace PunchingFoundRebarModule.Model
                     (
                         column.Location.X - column.FacingOrientation.Y * ((punchingRebarCount90 * (2 * step) - step) / 2 - 0.5 * step),
                         column.Location.Y + column.FacingOrientation.X * ((punchingRebarCount90 * (2 * step) - step) / 2 - 0.5 * step),
-                        column.Location.Z
+                        startPoint.Z
                     );
             }
             else
             {
-                double afterColumnDistance = GetAfterColumnDistance(foundationSlab, rebarCoverDown, backRebarDiameter);
-                double length = GetFrameLength(foundationSlab, step, rebarCoverDown, backRebarDiameter);
+                double afterColumnDistance = PunchingRebarGeometryCalculator.GetAfterColumnDistance(foundationSlab, rebarCoverDown, backRebarDiameter);
+                double length = PunchingRebarGeometryCalculator.GetFrameLength(foundationSlab, step, rebarCoverDown, backRebarDiameter);
 
                 startPoint = punchingRebar.Location;
                 endPoint = new XYZ
                     (
                         column.Location.X - column.FacingOrientation.Y * (length / 2 + column.Width / 2 + afterColumnDistance),
                         column.Location.Y + column.FacingOrientation.X * (length / 2 + column.Width / 2 + afterColumnDistance),
-                        column.Location.Z
+                        startPoint.Z
                     );
             }
 
@@ -296,7 +296,7 @@ namespace PunchingFoundRebarModule.Model
         /// <param name="backRebarDiameter"></param>
         static private void MoveFamilyInstanceDown(PunchingRebar punchingRebar, double longRebarDiameter, double rebarDiameter ,double rebarCoverUp, double backRebarDiameter)
         {
-            XYZ startPoint = ((LocationPoint)punchingRebar.FamilyInstance.Location).Point;
+            XYZ startPoint = punchingRebar.Location;
             XYZ endPoint = new XYZ
                 (
                     startPoint.X,
@@ -304,9 +304,8 @@ namespace PunchingFoundRebarModule.Model
                     startPoint.Z + (rebarDiameter + 0.5 * 5 * rebarDiameter) - 0.5 * longRebarDiameter - rebarCoverUp - backRebarDiameter
                 );
 
-            punchingRebar.FamilyInstance.Location.Move(endPoint - startPoint); 
+            punchingRebar.FamilyInstance.Location.Move(endPoint - startPoint);
         }
-
 
         /// <summary>
         /// Поворачивает семейство на заданный угол вокруг своей оси
@@ -320,82 +319,5 @@ namespace PunchingFoundRebarModule.Model
 
             punchingRebar.FamilyInstance.Location.Rotate(axeLine, angle);
         }
-
-        /// <summary>
-        /// Находит рабочую высоту сечения фундамента (h0)
-        /// </summary>
-        /// <returns></returns>
-        static private double GetWorkingHeight(Element foundationSlab, double rebarCoverDown, double backRebarDiameter)
-        {
-            double foundationSlabHeight = GetFoundationSlabHeight(foundationSlab);
-            double workingHeight = foundationSlabHeight - (rebarCoverDown + backRebarDiameter);
-
-            return workingHeight;
-        }
-
-        /// <summary>
-        /// Находит расстояние от грани колонны до первого стержня каркаса
-        /// </summary>
-        /// <returns></returns>
-        static private double GetAfterColumnDistance(Element foundationSlab, double rebarCoverDown, double backRebarDiameter)
-        {
-            double workingHeight = GetWorkingHeight(foundationSlab, rebarCoverDown, backRebarDiameter);
-            double afterColumnDistance = workingHeight / 3;
-            double afterColumnDistanceRounded = Math.Ceiling((afterColumnDistance * 304.8) / 10) * 10 / 304.8;
-
-            return afterColumnDistanceRounded;
-        }
-
-        /// <summary>
-        /// Находит размер зоны продавливания (расстояние от грани пилона до 1,5h0)
-        /// </summary>
-        /// <param name="foundationSlab"></param>
-        /// <param name="rebarCoverDown"></param>
-        /// <param name="backRebarDiameter"></param>
-        /// <returns></returns>
-        static private double GetPunchingZone(Element foundationSlab, double rebarCoverDown, double backRebarDiameter)
-        {
-            double workingHeight = GetWorkingHeight(foundationSlab, rebarCoverDown, backRebarDiameter);
-            double punchingZone = 1.5 * workingHeight;
-
-            return punchingZone;
-        }
-
-        /// <summary>
-        /// Находит длину каркаса (без учета "хвостиков")
-        /// </summary>
-        /// <param name="foundationSlab"></param>
-        /// <param name="step"></param>
-        /// <param name="rebarCoverDown"></param>
-        /// <param name="backRebarDiameter"></param>
-        /// <returns></returns>
-        static private double GetFrameLength(Element foundationSlab, double step, double rebarCoverDown, double backRebarDiameter)
-        {
-            double workingHeight = GetWorkingHeight(foundationSlab, rebarCoverDown, backRebarDiameter);
-            double afterColumnDistance = GetAfterColumnDistance(foundationSlab, rebarCoverDown, backRebarDiameter);
-            double punchingZoneLength = GetPunchingZone(foundationSlab, rebarCoverDown, backRebarDiameter);
-            double punchingZoneLengthRounded = Math.Ceiling(punchingZoneLength * 304.8 /10) * 10 / 304.8;
-            double frameLength = Math.Ceiling((punchingZoneLengthRounded - afterColumnDistance) / step) * step;
-            
-            return frameLength;
-        }
-
-
-        /// <summary>
-        /// Определяет толщину фундаментной плиты
-        /// </summary>
-        /// <param name="element"></param>
-        /// <returns></returns>
-        static private double GetFoundationSlabHeight (Element element)
-        {
-            double foundationSlabHeight = element.get_Parameter(BuiltInParameter.FLOOR_ATTR_THICKNESS_PARAM).AsDouble();
-
-            return foundationSlabHeight;
-        }
-
-        
-
-
-
     }
 }

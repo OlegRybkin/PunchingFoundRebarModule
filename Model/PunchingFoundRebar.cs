@@ -6,6 +6,7 @@ using Autodesk.Revit.UI.Events;
 using Autodesk.Revit.UI.Selection;
 using PunchingFoundRebarModule.View;
 using PunchingFoundRebarModule.ViewModel;
+using RevitTools;
 using System;
 using System.Collections.Generic;
 using System.Data.Common;
@@ -20,30 +21,13 @@ namespace PunchingFoundRebarModule.Model
     [Transaction(TransactionMode.Manual)]
     public class PunchingFoundRebar : IExternalCommand
     {
-        internal static bool IsRebarCoverFromModel { get; set; }
-
-        internal static double Step {  get; set; }
-        internal static double RebarDiameter { get; set; }
-        internal static double BackRebarDiameter { get; set; }
-        internal static double RebarCoverUp {  get; set; }
-        internal static double RebarCoverDown { get; set; }
+        private double RebarCoverUp {  get; set; }
+        private double RebarCoverDown { get; set; }
 
         public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
         {
             UIDocument uidoc = commandData.Application.ActiveUIDocument;
             Document doc = uidoc.Document;
-
-            //Для примера, потом убрать
-            IsRebarCoverFromModel = false;
-
-            Step = 100 / 304.8;
-
-            RebarDiameter = 10 / 304.8;
-            BackRebarDiameter = 10 / 304.8;
-            RebarCoverUp = 40 / 304.8;
-            RebarCoverDown = 65 / 304.8;
-            //
-
 
             try
             {
@@ -84,7 +68,7 @@ namespace PunchingFoundRebarModule.Model
                     }
                 }
 
-                MainWindowVM mainWindowVM = new MainWindowVM();
+                MainWindowVM mainWindowVM = new MainWindowVM(doc);
                 MainWindow mainWindow = new MainWindow()
                 {
                     DataContext = mainWindowVM,
@@ -100,7 +84,7 @@ namespace PunchingFoundRebarModule.Model
                 Reference foundationSlabReference = uidoc.Selection.PickObject(ObjectType.Element, new FoundationSlabFilter(), "Выберите фундаментную плиту");
                 Element foundationSlab = doc.GetElement(foundationSlabReference.ElementId);
 
-                if (IsRebarCoverFromModel)
+                if (mainWindowVM.IsRebarCoverFromModel)
                 {
                     RebarCoverType rebarCoverUpType = doc.GetElement(foundationSlab.get_Parameter(BuiltInParameter.CLEAR_COVER_TOP).AsElementId()) as RebarCoverType;
                     RebarCoverUp = rebarCoverUpType.CoverDistance;
@@ -108,27 +92,36 @@ namespace PunchingFoundRebarModule.Model
                     RebarCoverType rebarCoverDownType = doc.GetElement(foundationSlab.get_Parameter(BuiltInParameter.CLEAR_COVER_BOTTOM).AsElementId()) as RebarCoverType;
                     RebarCoverDown = rebarCoverDownType.CoverDistance;
                 }
-
-
-
+                else
+                {
+                    RebarCoverUp = Calculator.FromMmToFeet(mainWindowVM.RebarCoverUp);
+                    RebarCoverDown = Calculator.FromMmToFeet(mainWindowVM.RebarCoverDown);
+                }
 
                 using (Transaction trans = new Transaction(doc, "Размещение IFC-каркаса"))
                 {
                     trans.Start();
 
+                    RebarParameters rebarParameters = new RebarParameters()
+                    {
+
+                    };
+
                     foreach (Column column in columns)
                     {
-                        PunchingFoundRebarTools.AddPunchingRebarToFoundation(doc, foundationSlab, column, Step, RebarDiameter, BackRebarDiameter, RebarCoverUp, RebarCoverDown);
+                        PunchingRebarPlacementService.AddPunchingRebarToFoundation
+                            (doc, 
+                            foundationSlab, 
+                            column,
+                            Calculator.FromMmToFeet(mainWindowVM.Step),
+                            Calculator.FromMmToFeet(mainWindowVM.RebarDiameter),
+                            Calculator.FromMmToFeet(mainWindowVM.BackRebarDiameter), 
+                            RebarCoverUp, 
+                            RebarCoverDown);
                     }
 
                     trans.Commit();
                 }
-
-                
-
-                
-
-
 
                 return Result.Succeeded;
             }
