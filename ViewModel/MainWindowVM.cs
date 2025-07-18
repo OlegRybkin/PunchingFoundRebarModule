@@ -2,6 +2,7 @@
 using Autodesk.Revit.UI;
 using Prism.Commands;
 using Prism.Mvvm;
+using RevitTools;
 using RevitTools.Settings;
 using System;
 using System.Collections.Generic;
@@ -30,6 +31,19 @@ namespace PunchingFoundRebarModule.ViewModel
             }
         }
 
+        public IEnumerable<RebarClass> RebarClasses { get; private set; }
+
+        private int rebarClass;
+        public int RebarClass
+        {
+            get { return rebarClass; }
+            set 
+            { 
+                rebarClass = value;
+                RaisePropertyChanged(nameof(RebarClass));
+            }
+        }
+
         private int stirrupStep;
         public int StirrupStep
         {
@@ -41,14 +55,36 @@ namespace PunchingFoundRebarModule.ViewModel
             }
         }
 
-        private int frameStep;
-        public int FrameStep
+        private int frameWidth;
+        public int FrameWidth
         {
-            get { return frameStep; }
+            get { return frameWidth; }
             set
             {
-                frameStep = value;
-                RaisePropertyChanged(nameof(FrameStep));
+                frameWidth = value;
+                RaisePropertyChanged(nameof(FrameWidth));
+            }
+        }
+
+        private bool isLocationFoundation;
+        public bool IsLocationFoundation
+        {
+            get { return isLocationFoundation; }
+            set 
+            { 
+                isLocationFoundation = value;
+                RaisePropertyChanged(nameof(IsLocationFoundation));
+            }
+        }
+
+        private bool isLocationPlate;
+        public bool IsLocationPlate
+        {
+            get { return isLocationPlate; }
+            set
+            {
+                isLocationPlate = value;
+                RaisePropertyChanged(nameof(IsLocationPlate));
             }
         }
 
@@ -127,7 +163,8 @@ namespace PunchingFoundRebarModule.ViewModel
 
         public MainWindowVM(Document doc)
         { 
-            RebarDiametersList = new List<int>() { 8, 10, 12, 14, 16, 18, 20, 22, 25, 28, 32, 36, 40};
+            RebarDiametersList = StructConstants.RebarDiameters;
+            RebarClasses = Enum.GetValues(typeof(RebarClass)).Cast<RebarClass>();
             SettingsPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Personal), "A101 Mod", "2022", $"{doc.Title}_PunchingFoundRebar.json");
 
             if (File.Exists(SettingsPath))
@@ -135,8 +172,10 @@ namespace PunchingFoundRebarModule.ViewModel
                 SettingsStore settings = SettingsStore.Load(SettingsPath);
 
                 RebarDiameter = settings.Get("RebarDiameter", 1);
-                StirrupStep = settings.Get("Step", 1);
-                FrameStep = settings.Get("Step", 1);
+                RebarClass = settings.Get("RebarClass", 1);
+                StirrupStep = settings.Get("StirrupStep", 1);
+                FrameWidth = settings.Get("FrameWidth", 1);
+                IsLocationFoundation = settings.Get("IsLocationFoundation", true);
 
                 BackRebarDiameter = settings.Get("BackRebarDiameter", 1);
                 IsRebarCoverFromModel = settings.Get("IsRebarCoverFromModel", true);
@@ -144,12 +183,13 @@ namespace PunchingFoundRebarModule.ViewModel
                 RebarCoverDown = settings.Get("RebarCoverDown", 1);
 
                 if (!IsRebarCoverFromModel) IsRebarCoverFromUser = true;
+                if (!IsLocationFoundation) IsLocationPlate = true;
             }
             else
             {
                 RebarDiameter = 10;
                 StirrupStep = 200;
-                FrameStep = 200;
+                FrameWidth = 200;
 
                 BackRebarDiameter = 16;
                 IsRebarCoverFromModel = true;
@@ -179,8 +219,10 @@ namespace PunchingFoundRebarModule.ViewModel
             SettingsStore settings = new SettingsStore();
 
             settings.Set("RebarDiameter", RebarDiameter);
+            settings.Set("RebarClass", 1);
             settings.Set("StirrupStep", StirrupStep);
-            settings.Set("FrameStep", FrameStep);
+            settings.Set("FrameWidth", FrameWidth);
+            settings.Set("IsLocationFoundation", IsLocationFoundation);
 
             settings.Set("BackRebarDiameter", BackRebarDiameter);
             settings.Set("IsRebarCoverFromModel", IsRebarCoverFromModel);

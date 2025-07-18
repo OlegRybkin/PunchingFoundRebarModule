@@ -30,18 +30,25 @@ namespace PunchingFoundRebarModule.Model
             }
         }
 
-        internal PunchingRebar(FamilySymbol familySymbol, XYZ location, double step, double rebarDiameter, double longRebarDiameter, double height, int stirrupCount) 
+        internal PunchingRebar(FamilySymbol familySymbol, XYZ location, Element foundationSlab, RebarParameters rebarParameters, double longRebarDiameter) 
         {
             double addLength = 50 / 304.8; // длина выпуска продольных стрежней за крайние хомуты
             double bendLegth = 90 / 304.8; // длина отгиба хомута
 
             FamilyInstance = familySymbol.Document.Create.NewFamilyInstance(location, familySymbol, StructuralType.NonStructural);
 
+            double height = PunchingRebarGeometryCalculator.GetFoundationSlabHeight(foundationSlab) -
+                    (rebarParameters.RebarCoverUp + rebarParameters.BackRebarDiameter) -
+                    (rebarParameters.RebarCoverDown + 2 * rebarParameters.BackRebarDiameter) -
+                    longRebarDiameter;
+
+            int stirrupCount = Convert.ToInt32(PunchingRebarGeometryCalculator.GetFrameLength(foundationSlab, rebarParameters) / rebarParameters.StirrupStep) + 1;
+
             // Заполняем параметры каркаса
             FamilyInstance.LookupParameter("обр_ПР_Код металлопроката").Set(501);
             FamilyInstance.LookupParameter("обр_Х_Код металлопроката").Set(501);
 
-            FamilyInstance.LookupParameter("мод_ПР_Шаг по ширине").Set(step - rebarDiameter - longRebarDiameter);
+            FamilyInstance.LookupParameter("мод_ПР_Шаг по ширине").Set(rebarParameters.FrameWidth - rebarParameters.RebarDiameter - longRebarDiameter);
             FamilyInstance.LookupParameter("мод_ПР_Шаг по высоте").Set(height);
 
             FamilyInstance.LookupParameter("мод_ПР_Диаметр_Верх").Set(longRebarDiameter);
@@ -54,9 +61,9 @@ namespace PunchingFoundRebarModule.Model
 
             FamilyInstance.LookupParameter("мод_Х_Изменить привязку").Set(1);
 
-            FamilyInstance.LookupParameter("мод_Х_Диаметр").Set(rebarDiameter);
+            FamilyInstance.LookupParameter("мод_Х_Диаметр").Set(rebarParameters.RebarDiameter);
             FamilyInstance.LookupParameter("мод_Х_Длина отгибов").Set(bendLegth);
-            FamilyInstance.LookupParameter("мод_Х_Шаг").Set(step);
+            FamilyInstance.LookupParameter("мод_Х_Шаг").Set(rebarParameters.StirrupStep);
             FamilyInstance.LookupParameter("мод_Х_Количество").Set(stirrupCount);
         }
 

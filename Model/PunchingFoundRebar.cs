@@ -104,20 +104,23 @@ namespace PunchingFoundRebarModule.Model
 
                     RebarParameters rebarParameters = new RebarParameters()
                     {
+                        RebarDiameter = Calculator.FromMmToFeet(mainWindowVM.RebarDiameter),
+                        //RebarClass = mainWindowVM.RebarClass,
+                        StirrupStep = Calculator.FromMmToFeet(mainWindowVM.StirrupStep),
+                        FrameWidth = Calculator.FromMmToFeet(mainWindowVM.FrameWidth),
+                        //RebarLocation
+                        BackRebarDiameter = Calculator.FromMmToFeet(mainWindowVM.BackRebarDiameter),
+                        IsRebarCoverFromModel = mainWindowVM.IsRebarCoverFromModel,
+                        RebarCoverUp = this.RebarCoverUp,
+                        RebarCoverDown= this.RebarCoverDown,
+
+
 
                     };
 
                     foreach (Column column in columns)
                     {
-                        PunchingRebarPlacementService.AddPunchingRebarToFoundation
-                            (doc, 
-                            foundationSlab, 
-                            column,
-                            Calculator.FromMmToFeet(mainWindowVM.Step),
-                            Calculator.FromMmToFeet(mainWindowVM.RebarDiameter),
-                            Calculator.FromMmToFeet(mainWindowVM.BackRebarDiameter), 
-                            RebarCoverUp, 
-                            RebarCoverDown);
+                        PunchingRebarPlacementService.AddPunchingRebarToFoundation(doc, foundationSlab, column, rebarParameters);
                     }
 
                     trans.Commit();

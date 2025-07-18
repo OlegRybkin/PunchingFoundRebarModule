@@ -18,7 +18,7 @@ namespace PunchingFoundRebarModule.Model
         internal double RebarDiameter { get; set; }
         internal RebarClass RebarClass { get; set; }
         internal double StirrupStep { get; set; }
-        internal double FrameStep { get; set; }
+        internal double FrameWidth { get; set; }
         internal RebarLocation RebarLocation { get; set; }
         internal double BackRebarDiameter { get; set; }
         internal bool IsRebarCoverFromModel { get; set; }
