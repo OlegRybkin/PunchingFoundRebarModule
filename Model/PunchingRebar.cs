@@ -1,6 +1,7 @@
 ﻿using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.Structure;
 using System;
+using RevitTools;
 using System.Collections.Generic;
 using System.Data.Common;
 using System.Linq;
@@ -30,23 +31,23 @@ namespace PunchingFoundRebarModule.Model
             }
         }
 
-        internal PunchingRebar(FamilySymbol familySymbol, XYZ location, Element foundationSlab, RebarParameters rebarParameters, double longRebarDiameter) 
+        internal PunchingRebar(FamilySymbol familySymbol, XYZ location, Slab slab, RebarParameters rebarParameters, double longRebarDiameter) 
         {
             double addLength = 50 / 304.8; // длина выпуска продольных стрежней за крайние хомуты
             double bendLegth = 90 / 304.8; // длина отгиба хомута
 
             FamilyInstance = familySymbol.Document.Create.NewFamilyInstance(location, familySymbol, StructuralType.NonStructural);
 
-            double height = PunchingRebarGeometryCalculator.GetFoundationSlabHeight(foundationSlab) -
+            double height = slab.Thickness -
                     (rebarParameters.RebarCoverUp + rebarParameters.BackRebarDiameter) -
                     (rebarParameters.RebarCoverDown + 2 * rebarParameters.BackRebarDiameter) -
                     longRebarDiameter;
 
-            int stirrupCount = Convert.ToInt32(PunchingRebarGeometryCalculator.GetFrameLength(foundationSlab, rebarParameters) / rebarParameters.StirrupStep) + 1;
+            int stirrupCount = Convert.ToInt32(PunchingRebarGeometryCalculator.GetFrameLength(slab, rebarParameters) / rebarParameters.StirrupStep) + 1;
 
             // Заполняем параметры каркаса
             FamilyInstance.LookupParameter("обр_ПР_Код металлопроката").Set(501);
-            FamilyInstance.LookupParameter("обр_Х_Код металлопроката").Set(501);
+            FamilyInstance.LookupParameter("обр_Х_Код металлопроката").Set(rebarParameters.RebarClass);
 
             FamilyInstance.LookupParameter("мод_ПР_Шаг по ширине").Set(rebarParameters.FrameWidth - rebarParameters.RebarDiameter - longRebarDiameter);
             FamilyInstance.LookupParameter("мод_ПР_Шаг по высоте").Set(height);
@@ -65,6 +66,19 @@ namespace PunchingFoundRebarModule.Model
             FamilyInstance.LookupParameter("мод_Х_Длина отгибов").Set(bendLegth);
             FamilyInstance.LookupParameter("мод_Х_Шаг").Set(rebarParameters.StirrupStep);
             FamilyInstance.LookupParameter("мод_Х_Количество").Set(stirrupCount);
+
+            string groupKR;
+
+            if (slab.SlabType == SlabType.Foundation)
+            {
+                groupKR = "ФП_Каркасы_Продавливание";
+            }
+            else
+            {
+                groupKR = "ПП_Каркасы_Продавливание";
+            }
+
+            RevitModel.CopyParameters(slab.Element, FamilyInstance, groupKR);
         }
 
     }

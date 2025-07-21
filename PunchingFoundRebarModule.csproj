@@ -62,7 +62,8 @@
       <HintPath>C:\Program Files\Autodesk\Revit 2022\RevitAPIUI.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="RevitTools">
+    <Reference Include="RevitTools, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
       <HintPath>..\RevitTools\bin\Debug\RevitTools.dll</HintPath>
     </Reference>
     <Reference Include="System" />
@@ -86,7 +87,8 @@
   <ItemGroup>
     <Compile Include="Model\Column.cs" />
     <Compile Include="Model\ColumnFromLinkFilter.cs" />
-    <Compile Include="Model\FoundationSlabFilter.cs" />
+    <Compile Include="Model\Slab.cs" />
+    <Compile Include="Model\SlabFilter.cs" />
     <Compile Include="Model\ColumnFromModelFilter.cs" />
     <Compile Include="Model\PunchingFoundRebar.cs" />
     <Compile Include="Model\PunchingRebarGeometryCalculator.cs" />

@@ -8,11 +8,12 @@ using System.Threading.Tasks;
 
 namespace PunchingFoundRebarModule.Model
 {
-    internal class FoundationSlabFilter : ISelectionFilter
+    internal class SlabFilter : ISelectionFilter
     {
         public bool AllowElement(Element elem)
         {
-            if (elem.get_Parameter(BuiltInParameter.ELEM_CATEGORY_PARAM_MT).AsValueString() == "Фундамент несущей конструкции")
+            if (elem.get_Parameter(BuiltInParameter.ELEM_CATEGORY_PARAM_MT).AsValueString() == "Фундамент несущей конструкции" ||
+                elem.get_Parameter(BuiltInParameter.ELEM_CATEGORY_PARAM_MT).AsValueString() == "Перекрытия")
             {
                 return true;
             }

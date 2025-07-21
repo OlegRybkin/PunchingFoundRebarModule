@@ -7,19 +7,13 @@ using System.Threading.Tasks;
 
 namespace PunchingFoundRebarModule.Model
 {
-    internal enum RebarLocation
-    {
-        OnFoundation,
-        OnPlate
-    }
-
     internal class RebarParameters
     {
         internal double RebarDiameter { get; set; }
-        internal RebarClass RebarClass { get; set; }
+        internal int RebarClass { get; set; }
         internal double StirrupStep { get; set; }
         internal double FrameWidth { get; set; }
-        internal RebarLocation RebarLocation { get; set; }
+
         internal double BackRebarDiameter { get; set; }
         internal bool IsRebarCoverFromModel { get; set; }
         internal double RebarCoverDown {  get; set; }

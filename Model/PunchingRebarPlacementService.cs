@@ -15,7 +15,7 @@ namespace PunchingFoundRebarModule.Model
 {
     internal class PunchingRebarPlacementService
     {
-        static internal void AddPunchingRebarToFoundation(Document doc, Element foundationSlab, Column column, RebarParameters rebarParameters)
+        static internal void AddPunchingRebarToFoundation(Document doc, Slab slab, Column column, RebarParameters rebarParameters)
         {
             string familyName = "IFC_Каркас_КГор_1";
             string familyType = "Х_1501";
@@ -42,15 +42,15 @@ namespace PunchingFoundRebarModule.Model
 
                 // ПОД КАРКАСОМ С УГЛОМ 90 ПОНИМАЕТСЯ КАРКАС, ТОРЕЦ КОТОРОГО ЛЕЖИТ ПАРАЛЛЕЛЬНО КОРОТКОЙ СТОРОНЕ ПИЛОНА
                 // Создние каркаса в первом направлении (торцы каркасов идут вдоль длиннной стороны пилона)
-                PunchingRebar punchingRebar0 = new PunchingRebar(punchingRebarFS, column.Location, foundationSlab, rebarParameters, longRebarDiameter);
+                PunchingRebar punchingRebar0 = new PunchingRebar(punchingRebarFS, column.Location, slab, rebarParameters, longRebarDiameter);
 
                 MoveFamilyInstanceDown(punchingRebar0, longRebarDiameter, rebarParameters);
                 RotateFamilyInstance(punchingRebar0, column.FacingOrientation.AngleTo(punchingRebar0.FamilyInstance.FacingOrientation));
-                MoveFamilyInstanceCrossColumn(punchingRebar0, foundationSlab, column, rebarParameters, false);
+                MoveFamilyInstanceCrossColumn(punchingRebar0, slab, column, rebarParameters, false);
 
-                int punchingRebarCount0 = GetFrameCount(column, foundationSlab, rebarParameters, false);
+                int punchingRebarCount0 = GetFrameCount(column, slab, rebarParameters, false);
 
-                MoveFamilyInstanceAlongColumn(punchingRebar0, column, foundationSlab, rebarParameters, false);
+                MoveFamilyInstanceAlongColumn(punchingRebar0, column, slab, rebarParameters, false);
                 CopyRebar(punchingRebar0.FamilyInstance, -column.FacingOrientation, punchingRebarCount0, rebarParameters.FrameWidth * 2);
 
                 Element element0 = MirrorRebar(punchingRebar0, column, false);
@@ -58,22 +58,21 @@ namespace PunchingFoundRebarModule.Model
 
 
                 // Создание каркаса во втором направлении (торцы каркасов идут вдоль короткой стороны пилона)
-                PunchingRebar punchingRebar90 = new PunchingRebar(punchingRebarFS, column.Location, foundationSlab, rebarParameters, longRebarDiameter);
+                PunchingRebar punchingRebar90 = new PunchingRebar(punchingRebarFS, column.Location, slab, rebarParameters, longRebarDiameter);
 
                 MoveFamilyInstanceDown(punchingRebar90, longRebarDiameter, rebarParameters);
                 RotateFamilyInstance(punchingRebar90, column.FacingOrientation.AngleTo(punchingRebar90.FamilyInstance.FacingOrientation) + Math.PI / 2);
-                MoveFamilyInstanceCrossColumn(punchingRebar90, foundationSlab, column, rebarParameters, true);
+                MoveFamilyInstanceCrossColumn(punchingRebar90, slab, column, rebarParameters, true);
 
-                int punchingRebarCount90 = GetFrameCount(column, foundationSlab, rebarParameters, true);
+                int punchingRebarCount90 = GetFrameCount(column, slab, rebarParameters, true);
 
-                MoveFamilyInstanceAlongColumn(punchingRebar90, column, foundationSlab, rebarParameters, true);
+                MoveFamilyInstanceAlongColumn(punchingRebar90, column, slab, rebarParameters, true);
 
                 XYZ copyOrientation = new XYZ
                     (
                         -column.FacingOrientation.Y,
                         column.FacingOrientation.X,
                         column.FacingOrientation.Z
-
                     );
 
                 CopyRebar(punchingRebar90.FamilyInstance, -copyOrientation, punchingRebarCount90, rebarParameters.FrameWidth * 2);
@@ -155,7 +154,7 @@ namespace PunchingFoundRebarModule.Model
         }
 
         /// <summary>
-        /// Возращает количество каркасов, которые расположены перпендикулярно длинной стороне
+        /// Возращает количество каркасов
         /// </summary>
         /// <param name="column"></param>
         /// <param name="step"></param>
@@ -163,22 +162,24 @@ namespace PunchingFoundRebarModule.Model
         /// <param name="rebarCoverDown"></param>
         /// <param name="backRebarDiameter"></param>
         /// <returns></returns>
-        static private int GetFrameCount(Column column, Element foundationSlab, RebarParameters rebarParameters, bool isAngle90)
+        static private int GetFrameCount(Column column, Slab slab, RebarParameters rebarParameters, bool isAngle90)
         {
             double punchingLength = 0;
             int punchingRebarCount = 0;
 
             if (isAngle90)
             {
-                double afterColumnDistance = PunchingRebarGeometryCalculator.GetAfterColumnDistance(foundationSlab, rebarParameters);
-                punchingLength = column.Width + 2 * afterColumnDistance;
-                punchingRebarCount = Convert.ToInt32(Math.Floor(punchingLength / (2 * rebarParameters.FrameWidth)));
+                double punchingZone = PunchingRebarGeometryCalculator.GetPunchingZone(slab, rebarParameters);
+                punchingLength = column.Width + 2 * punchingZone;
+                //punchingRebarCount = Convert.ToInt32(Math.Ceiling(punchingLength / (2 * rebarParameters.FrameWidth))) + 1;
+                punchingRebarCount = Convert.ToInt32(Math.Ceiling((punchingLength / rebarParameters.FrameWidth + 1) / 2));
             }
             else
             {
-                double punchingZone = PunchingRebarGeometryCalculator.GetPunchingZone(foundationSlab, rebarParameters);
-                punchingLength = column.Length + 2 * punchingZone;
-                punchingRebarCount = Convert.ToInt32(Math.Ceiling(punchingLength / (2 * rebarParameters.FrameWidth))) + 1;
+                double afterColumnDistance = PunchingRebarGeometryCalculator.GetAfterColumnDistance(slab, rebarParameters);
+                punchingLength = column.Length + 2 * afterColumnDistance;
+                //punchingRebarCount = Convert.ToInt32(Math.Ceiling(punchingLength / (2 * rebarParameters.FrameWidth)));
+                punchingRebarCount = Convert.ToInt32(Math.Ceiling((punchingLength / rebarParameters.FrameWidth - 1) / 2));
             }
 
             return punchingRebarCount;
@@ -193,16 +194,16 @@ namespace PunchingFoundRebarModule.Model
         /// <param name="foundationSlab"></param>
         /// <param name="rebarCoverDown"></param>
         /// <param name="backRebarDiameter"></param>
-        static private void MoveFamilyInstanceAlongColumn(PunchingRebar punchingRebar, Column column, Element foundationSlab, RebarParameters rebarParameters, bool isAngle90)
+        static private void MoveFamilyInstanceAlongColumn(PunchingRebar punchingRebar, Column column, Slab slab, RebarParameters rebarParameters, bool isAngle90)
         {
             XYZ startPoint = new XYZ();
             XYZ endPoint = new XYZ();
 
             if (isAngle90)
             {
-                int punchingRebarCount90 = GetFrameCount(column, foundationSlab, rebarParameters, true);
-                double length = PunchingRebarGeometryCalculator.GetFrameLength(foundationSlab, rebarParameters);
-                double afterColumnDistance = PunchingRebarGeometryCalculator.GetAfterColumnDistance(foundationSlab, rebarParameters);
+                int punchingRebarCount90 = GetFrameCount(column, slab, rebarParameters, true);
+                double length = PunchingRebarGeometryCalculator.GetFrameLength(slab, rebarParameters);
+                double afterColumnDistance = PunchingRebarGeometryCalculator.GetAfterColumnDistance(slab, rebarParameters);
 
                 startPoint = punchingRebar.Location;
 
@@ -215,7 +216,7 @@ namespace PunchingFoundRebarModule.Model
             }
             else
             {
-                int frameCount = GetFrameCount(column, foundationSlab, rebarParameters, false);
+                int frameCount = GetFrameCount(column, slab, rebarParameters, false);
 
                 startPoint = punchingRebar.Location;
 
@@ -239,14 +240,14 @@ namespace PunchingFoundRebarModule.Model
         /// <param name="rebarCoverDown"></param>
         /// <param name="backRebarDiameter"></param>
         /// <param name="isAngle90">Условный параметр, который обознеачет направление каркаса (для каркаса с индексом 90)</param>
-        static private void MoveFamilyInstanceCrossColumn(PunchingRebar punchingRebar, Element foundationSlab,  Column column, RebarParameters rebarParameters, bool isAngle90)
+        static private void MoveFamilyInstanceCrossColumn(PunchingRebar punchingRebar, Slab slab,  Column column, RebarParameters rebarParameters, bool isAngle90)
         {
             XYZ startPoint = new XYZ();
             XYZ endPoint = new XYZ();
 
             if (isAngle90)
             {
-                int frameCount90 = GetFrameCount(column, foundationSlab, rebarParameters, true);
+                int frameCount90 = GetFrameCount(column, slab, rebarParameters, true);
 
                 startPoint = punchingRebar.Location;
                 endPoint = new XYZ
@@ -258,8 +259,8 @@ namespace PunchingFoundRebarModule.Model
             }
             else
             {
-                double afterColumnDistance = PunchingRebarGeometryCalculator.GetAfterColumnDistance(foundationSlab, rebarParameters);
-                double length = PunchingRebarGeometryCalculator.GetFrameLength(foundationSlab, rebarParameters);
+                double afterColumnDistance = PunchingRebarGeometryCalculator.GetAfterColumnDistance(slab, rebarParameters);
+                double length = PunchingRebarGeometryCalculator.GetFrameLength(slab, rebarParameters);
 
                 startPoint = punchingRebar.Location;
                 endPoint = new XYZ
@@ -284,15 +285,32 @@ namespace PunchingFoundRebarModule.Model
         static private void MoveFamilyInstanceDown(PunchingRebar punchingRebar, double longRebarDiameter, RebarParameters rebarParameters)
         {
             XYZ startPoint = punchingRebar.Location;
-            XYZ endPoint = new XYZ
+            XYZ endPoint;
+
+            if (rebarParameters.RebarClass == 240)
+            {
+                endPoint = new XYZ
                 (
                     startPoint.X,
                     startPoint.Y,
-                    startPoint.Z + (rebarParameters.RebarDiameter + 0.5 * 5 * rebarParameters.RebarDiameter) - 
-                                    0.5 * longRebarDiameter - 
-                                    rebarParameters.RebarCoverUp - 
+                    startPoint.Z + (rebarParameters.RebarDiameter + 0.5 * 2.5 * rebarParameters.RebarDiameter) -
+                                    0.5 * longRebarDiameter -
+                                    rebarParameters.RebarCoverUp -
                                     rebarParameters.BackRebarDiameter
                 );
+            }
+            else
+            {
+                endPoint = new XYZ
+                (
+                    startPoint.X,
+                    startPoint.Y,
+                    startPoint.Z + (rebarParameters.RebarDiameter + 0.5 * 5 * rebarParameters.RebarDiameter) -
+                                    0.5 * longRebarDiameter -
+                                    rebarParameters.RebarCoverUp -
+                                    rebarParameters.BackRebarDiameter
+                );
+            }
 
             punchingRebar.FamilyInstance.Location.Move(endPoint - startPoint);
         }

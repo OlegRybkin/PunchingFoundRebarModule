@@ -14,6 +14,19 @@ namespace PunchingFoundRebarModule.Model
         internal XYZ FacingOrientation { get; private set; }
         internal double Length { get; private set; }
         internal double Width { get; private set; }
+        internal double Height { get; private set; }
+
+        private Slab bindingElement;
+        public Slab BindingElement
+        {
+            get { return bindingElement; }
+            set 
+            { 
+                bindingElement = value;
+
+                if (bindingElement.SlabType == SlabType.Plate) Location = GetUpLocation(bindingElement);
+            }
+        }
 
         internal Column(Element element) 
         {
@@ -23,6 +36,7 @@ namespace PunchingFoundRebarModule.Model
             FacingOrientation = ((FamilyInstance)element).FacingOrientation;
             Length = elementType.LookupParameter("ФОП_РАЗМ_Длина").AsDouble();
             Width = elementType.LookupParameter("ФОП_РАЗМ_Ширина").AsDouble();
+            Height = element.LookupParameter("Высота_Всп").AsDouble();
         }
 
         private XYZ GetLocation(Element column)
@@ -42,6 +56,20 @@ namespace PunchingFoundRebarModule.Model
                     downLevelMark + downOffset);
 
             return columnLocation;
+        }
+
+        private XYZ GetUpLocation(Slab bindingElement)
+        {
+            XYZ location = XYZ.Zero;
+            
+            location = new XYZ
+                (
+                    Location.X,
+                    Location.Y,
+                    Location.Z + Height + bindingElement.Thickness
+                );
+
+            return location;
         }
     }
 }

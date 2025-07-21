@@ -7,7 +7,7 @@
              xmlns:localVM="clr-namespace:PunchingFoundRebarModule.ViewModel"
              mc:Ignorable="d" 
              WindowStartupLocation="CenterScreen"
-        Height="550"
+        Height="490"
         Width="300"
         Title="Расстановка каркасов"
         ResizeMode="NoResize"
@@ -47,7 +47,10 @@
                               SelectedItem="{Binding RebarDiameter}"/>
 
                     <Label Content="Класс арматурных стержней"/>
-                    <ComboBox/>
+                    <ComboBox ItemsSource="{Binding RebarClasses}"
+                              DisplayMemberPath="Key"
+                              SelectedValuePath="Value"
+                              SelectedValue="{Binding RebarClass}"/>
 
                     <Label Content="Шаг хомутов, мм"/>
                     <TextBox>
@@ -70,13 +73,6 @@
                             </Binding>
                         </TextBox.Text>
                     </TextBox>
-
-                    <Label Content="Расположение каркасов:"/>
-                    <RadioButton GroupName="FrameLocation"
-                                 Content="В фундаментной плите"/>
-
-                    <RadioButton GroupName="FrameLocation"
-                                 Content="В плите перекрытия"/>
                     
                 </StackPanel>
             </GroupBox>

@@ -21,9 +21,6 @@ namespace PunchingFoundRebarModule.Model
     [Transaction(TransactionMode.Manual)]
     public class PunchingFoundRebar : IExternalCommand
     {
-        private double RebarCoverUp {  get; set; }
-        private double RebarCoverDown { get; set; }
-
         public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
         {
             UIDocument uidoc = commandData.Application.ActiveUIDocument;
@@ -80,22 +77,14 @@ namespace PunchingFoundRebarModule.Model
                     return Result.Cancelled;
                 }
 
-                //Выбор фундаментной плиты, в которой будут размещаться каркасы
-                Reference foundationSlabReference = uidoc.Selection.PickObject(ObjectType.Element, new FoundationSlabFilter(), "Выберите фундаментную плиту");
-                Element foundationSlab = doc.GetElement(foundationSlabReference.ElementId);
+                //Выбор плиты, в которой будут размещаться каркасы
+                Reference slabReference = uidoc.Selection.PickObject(ObjectType.Element, new SlabFilter(), "Выберите плиту");
+                Slab slab = new Slab(doc.GetElement(slabReference.ElementId));
 
-                if (mainWindowVM.IsRebarCoverFromModel)
+                if (!mainWindowVM.IsRebarCoverFromModel)
                 {
-                    RebarCoverType rebarCoverUpType = doc.GetElement(foundationSlab.get_Parameter(BuiltInParameter.CLEAR_COVER_TOP).AsElementId()) as RebarCoverType;
-                    RebarCoverUp = rebarCoverUpType.CoverDistance;
-
-                    RebarCoverType rebarCoverDownType = doc.GetElement(foundationSlab.get_Parameter(BuiltInParameter.CLEAR_COVER_BOTTOM).AsElementId()) as RebarCoverType;
-                    RebarCoverDown = rebarCoverDownType.CoverDistance;
-                }
-                else
-                {
-                    RebarCoverUp = Calculator.FromMmToFeet(mainWindowVM.RebarCoverUp);
-                    RebarCoverDown = Calculator.FromMmToFeet(mainWindowVM.RebarCoverDown);
+                    slab.RebarCoverUp = Calculator.FromMmToFeet(mainWindowVM.RebarCoverUp);
+                    slab.RebarCoverDown = Calculator.FromMmToFeet(mainWindowVM.RebarCoverDown);
                 }
 
                 using (Transaction trans = new Transaction(doc, "Размещение IFC-каркаса"))
@@ -105,22 +94,20 @@ namespace PunchingFoundRebarModule.Model
                     RebarParameters rebarParameters = new RebarParameters()
                     {
                         RebarDiameter = Calculator.FromMmToFeet(mainWindowVM.RebarDiameter),
-                        //RebarClass = mainWindowVM.RebarClass,
+                        RebarClass = mainWindowVM.RebarClass,
                         StirrupStep = Calculator.FromMmToFeet(mainWindowVM.StirrupStep),
                         FrameWidth = Calculator.FromMmToFeet(mainWindowVM.FrameWidth),
-                        //RebarLocation
+                        
                         BackRebarDiameter = Calculator.FromMmToFeet(mainWindowVM.BackRebarDiameter),
                         IsRebarCoverFromModel = mainWindowVM.IsRebarCoverFromModel,
-                        RebarCoverUp = this.RebarCoverUp,
-                        RebarCoverDown= this.RebarCoverDown,
-
-
-
+                        RebarCoverUp = slab.RebarCoverUp,
+                        RebarCoverDown= slab.RebarCoverDown,
                     };
 
                     foreach (Column column in columns)
                     {
-                        PunchingRebarPlacementService.AddPunchingRebarToFoundation(doc, foundationSlab, column, rebarParameters);
+                        column.BindingElement = slab;
+                        PunchingRebarPlacementService.AddPunchingRebarToFoundation(doc, slab, column, rebarParameters);
                     }
 
                     trans.Commit();
