@@ -1,13 +1,8 @@
 ﻿using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.Structure;
-using System;
 using RevitTools;
+using System;
 using System.Collections.Generic;
-using System.Data.Common;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Controls;
 
 namespace PunchingFoundRebarModule.Model
 {
@@ -31,7 +26,7 @@ namespace PunchingFoundRebarModule.Model
             }
         }
 
-        internal PunchingRebar(FamilySymbol familySymbol, XYZ location, Slab slab, RebarParameters rebarParameters, double longRebarDiameter) 
+        internal PunchingRebar(FamilySymbol familySymbol, XYZ location, Slab slab, RebarParameters rebarParameters, double longRebarDiameter)
         {
             double addLength = 50 / 304.8; // длина выпуска продольных стрежней за крайние хомуты
             double bendLegth = 90 / 304.8; // длина отгиба хомута
@@ -46,39 +41,67 @@ namespace PunchingFoundRebarModule.Model
             int stirrupCount = Convert.ToInt32(PunchingRebarGeometryCalculator.GetFrameLength(slab, rebarParameters) / rebarParameters.StirrupStep) + 1;
 
             // Заполняем параметры каркаса
-            FamilyInstance.LookupParameter("обр_ПР_Код металлопроката").Set(501);
-            FamilyInstance.LookupParameter("обр_Х_Код металлопроката").Set(rebarParameters.RebarClass);
-
-            FamilyInstance.LookupParameter("мод_ПР_Шаг по ширине").Set(rebarParameters.FrameWidth - rebarParameters.RebarDiameter - longRebarDiameter);
-            FamilyInstance.LookupParameter("мод_ПР_Шаг по высоте").Set(height);
-
-            FamilyInstance.LookupParameter("мод_ПР_Диаметр_Верх").Set(longRebarDiameter);
-            FamilyInstance.LookupParameter("мод_ПР_Диаметр_Низ").Set(longRebarDiameter);
-
-            FamilyInstance.LookupParameter("мод_ПР_Анкеровка_Верх_1").Set(addLength);
-            FamilyInstance.LookupParameter("мод_ПР_Анкеровка_Верх_2").Set(addLength);
-            FamilyInstance.LookupParameter("мод_ПР_Анкеровка_Низ_1").Set(addLength);
-            FamilyInstance.LookupParameter("мод_ПР_Анкеровка_Низ_2").Set(addLength);
-
-            FamilyInstance.LookupParameter("мод_Х_Изменить привязку").Set(1);
-
-            FamilyInstance.LookupParameter("мод_Х_Диаметр").Set(rebarParameters.RebarDiameter);
-            FamilyInstance.LookupParameter("мод_Х_Длина отгибов").Set(bendLegth);
-            FamilyInstance.LookupParameter("мод_Х_Шаг").Set(rebarParameters.StirrupStep);
-            FamilyInstance.LookupParameter("мод_Х_Количество").Set(stirrupCount);
-
-            string groupKR;
-
-            if (slab.SlabType == SlabType.Foundation)
+            List<string> parameterNames = new List<string>()
             {
-                groupKR = "ФП_Каркасы_Продавливание";
-            }
-            else
+                "обр_ПР_Код металлопроката",
+                "обр_Х_Код металлопроката",
+
+                "мод_ПР_Шаг по ширине",
+                "мод_ПР_Шаг по высоте",
+
+                "мод_ПР_Анкеровка_Верх_1",
+                "мод_ПР_Анкеровка_Верх_2",
+                "мод_ПР_Анкеровка_Низ_1",
+                "мод_ПР_Анкеровка_Низ_2",
+
+                "мод_Х_Изменить привязку",
+
+                "мод_Х_Диаметр",
+                "мод_Х_Длина отгибов",
+                "мод_Х_Шаг",
+                "мод_Х_Количество"
+            };
+
+            if (Checker.IsParametersExist(FamilyInstance, parameterNames))
             {
-                groupKR = "ПП_Каркасы_Продавливание";
+                FamilyInstance.LookupParameter("обр_ПР_Код металлопроката").Set(501);
+                FamilyInstance.LookupParameter("обр_Х_Код металлопроката").Set(rebarParameters.RebarClass);
+
+                FamilyInstance.LookupParameter("мод_ПР_Шаг по ширине").Set(rebarParameters.FrameWidth - rebarParameters.RebarDiameter - longRebarDiameter);
+                FamilyInstance.LookupParameter("мод_ПР_Шаг по высоте").Set(height);
+
+                FamilyInstance.LookupParameter("мод_ПР_Диаметр_Верх").Set(longRebarDiameter);
+                FamilyInstance.LookupParameter("мод_ПР_Диаметр_Низ").Set(longRebarDiameter);
+
+                FamilyInstance.LookupParameter("мод_ПР_Анкеровка_Верх_1").Set(addLength);
+                FamilyInstance.LookupParameter("мод_ПР_Анкеровка_Верх_2").Set(addLength);
+                FamilyInstance.LookupParameter("мод_ПР_Анкеровка_Низ_1").Set(addLength);
+                FamilyInstance.LookupParameter("мод_ПР_Анкеровка_Низ_2").Set(addLength);
+
+                FamilyInstance.LookupParameter("мод_Х_Изменить привязку").Set(1);
+
+                FamilyInstance.LookupParameter("мод_Х_Диаметр").Set(rebarParameters.RebarDiameter);
+                FamilyInstance.LookupParameter("мод_Х_Длина отгибов").Set(bendLegth);
+                FamilyInstance.LookupParameter("мод_Х_Шаг").Set(rebarParameters.StirrupStep);
+                FamilyInstance.LookupParameter("мод_Х_Количество").Set(stirrupCount);
+
+                string groupKR;
+
+                if (slab.SlabType == SlabType.Foundation)
+                {
+                    groupKR = "ФП_Каркасы_Продавливание";
+                }
+                else
+                {
+                    groupKR = "ПП_Каркасы_Продавливание";
+                }
+
+                RevitModel.CopyParameters(slab.Element, FamilyInstance, groupKR);
             }
 
-            RevitModel.CopyParameters(slab.Element, FamilyInstance, groupKR);
+            
+
+            
         }
 
     }

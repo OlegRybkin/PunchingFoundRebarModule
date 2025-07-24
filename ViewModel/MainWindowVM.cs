@@ -1,5 +1,4 @@
 ﻿using Autodesk.Revit.DB;
-using Autodesk.Revit.UI;
 using Prism.Commands;
 using Prism.Mvvm;
 using RevitTools;
@@ -7,9 +6,6 @@ using RevitTools.Settings;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 
 
@@ -18,6 +14,28 @@ namespace PunchingFoundRebarModule.ViewModel
     public class MainWindowVM : BindableBase
     {
         //АРМАТУРА КАРКАСОВ
+        private string familyName;
+        public string FamilyName
+        {
+            get { return familyName; }
+            set 
+            { 
+                familyName = value;
+                RaisePropertyChanged(nameof(FamilyName));
+            }
+        }
+
+        private string familyType;
+        public string FamilyType
+        {
+            get { return familyType; }
+            set 
+            { 
+                familyType = value; 
+                RaisePropertyChanged(nameof(FamilyType));
+            }
+        }
+
         public List<int> RebarDiametersList { get; private set; }
         
         private int rebarDiameter;
@@ -149,6 +167,9 @@ namespace PunchingFoundRebarModule.ViewModel
             {
                 SettingsStore settings = SettingsStore.Load(SettingsPath);
 
+                FamilyName = settings.Get("FamilyName", "abc");
+                FamilyType = settings.Get("FamilyType", "abc");
+
                 RebarDiameter = settings.Get("RebarDiameter", 1);
                 RebarClass = settings.Get("RebarClass", 1);
                 StirrupStep = settings.Get("StirrupStep", 1);
@@ -163,6 +184,9 @@ namespace PunchingFoundRebarModule.ViewModel
             }
             else
             {
+                FamilyName = "IFC_Каркас_!КГор_№1";
+                FamilyType = "Х_1501";
+
                 RebarDiameter = 10;
                 RebarClass = 501;
                 StirrupStep = 200;
@@ -194,6 +218,9 @@ namespace PunchingFoundRebarModule.ViewModel
         private void SaveSettings()
         {
             SettingsStore settings = new SettingsStore();
+
+            settings.Set("FamilyName", FamilyName);
+            settings.Set("FamilyType", FamilyType);
 
             settings.Set("RebarDiameter", RebarDiameter);
             settings.Set("RebarClass", RebarClass);

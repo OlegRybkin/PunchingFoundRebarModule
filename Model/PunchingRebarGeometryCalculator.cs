@@ -1,9 +1,5 @@
-﻿using Autodesk.Revit.DB;
+﻿using Autodesk.Revit.UI;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace PunchingFoundRebarModule.Model
 {
@@ -41,7 +37,7 @@ namespace PunchingFoundRebarModule.Model
         static internal double GetPunchingZone(Slab slab, RebarParameters rebarParameters)
         {
             double workingHeight = GetWorkingHeight(slab, rebarParameters);
-            double punchingZone = 1.5 * workingHeight;
+            double punchingZone = Math.Ceiling((1.5 * workingHeight * 304.8) / 10) * 10 / 304.8;
 
             return punchingZone;
         }
@@ -52,7 +48,6 @@ namespace PunchingFoundRebarModule.Model
         /// <returns></returns>
         static internal double GetFrameLength(Slab slab, RebarParameters rebarParameters)
         {
-            double workingHeight = GetWorkingHeight(slab, rebarParameters);
             double afterColumnDistance = GetAfterColumnDistance(slab, rebarParameters);
             double punchingZoneLength = GetPunchingZone(slab, rebarParameters);
             double punchingZoneLengthRounded = Math.Ceiling(punchingZoneLength * 304.8 / 10) * 10 / 304.8;

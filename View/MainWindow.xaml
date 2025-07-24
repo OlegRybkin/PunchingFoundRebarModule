@@ -7,7 +7,7 @@
              xmlns:localVM="clr-namespace:PunchingFoundRebarModule.ViewModel"
              mc:Ignorable="d" 
              WindowStartupLocation="CenterScreen"
-        Height="490"
+        Height="570"
         Width="300"
         Title="Расстановка каркасов"
         ResizeMode="NoResize"
@@ -15,7 +15,7 @@
     
     <Window.Resources>
         <!-- Стиль для показа ошибки: красная рамка + сообщение -->
-        <Style TargetType="TextBox">
+        <Style x:Key="IntTextBox" TargetType="TextBox">
             <Style.Triggers>
                 <Trigger Property="Validation.HasError" Value="True">
                     <Setter Property="ToolTip"
@@ -42,6 +42,12 @@
                     Orientation="Vertical">
             <GroupBox Header="Арматура каркасов">
                 <StackPanel>
+                    <Label Content="Имя семейства"/>
+                    <TextBox Text="{Binding FamilyName}"/>
+
+                    <Label Content="Имя типа"/>
+                    <TextBox Text="{Binding FamilyType}"/>
+
                     <Label Content="Диаметр арматурных стержней, мм"/>
                     <ComboBox ItemsSource="{Binding RebarDiametersList}"
                               SelectedItem="{Binding RebarDiameter}"/>
@@ -53,7 +59,7 @@
                               SelectedValue="{Binding RebarClass}"/>
 
                     <Label Content="Шаг хомутов, мм"/>
-                    <TextBox>
+                    <TextBox Style="{StaticResource IntTextBox}">
                         <TextBox.Text>
                             <Binding Path="StirrupStep" UpdateSourceTrigger="PropertyChanged" ValidatesOnDataErrors="True" ValidatesOnExceptions="True">
                                 <Binding.ValidationRules>
@@ -64,7 +70,7 @@
                     </TextBox>
 
                     <Label Content="Ширина каркаса, мм"/>
-                    <TextBox>
+                    <TextBox Style="{StaticResource IntTextBox}">
                         <TextBox.Text>
                             <Binding Path="FrameWidth" UpdateSourceTrigger="PropertyChanged" ValidatesOnDataErrors="True" ValidatesOnExceptions="True">
                                 <Binding.ValidationRules>
@@ -93,7 +99,8 @@
 
                     <Label Content="Защитный слой сверху, мм"
                            IsEnabled="{Binding IsControlEnabled}"/>
-                    <TextBox IsEnabled="{Binding IsControlEnabled}">
+                    <TextBox Style="{StaticResource IntTextBox}"
+                             IsEnabled="{Binding IsControlEnabled}">
                         <TextBox.Text>
                             <Binding Path="RebarCoverUp" UpdateSourceTrigger="PropertyChanged" ValidatesOnDataErrors="True" ValidatesOnExceptions="True">
                                 <Binding.ValidationRules>
@@ -105,7 +112,8 @@
 
                     <Label Content="Защитный слой снизу, мм"
                            IsEnabled="{Binding IsControlEnabled}"/>
-                    <TextBox IsEnabled="{Binding IsControlEnabled}">
+                    <TextBox Style="{StaticResource IntTextBox}"
+                             IsEnabled="{Binding IsControlEnabled}">
                         <TextBox.Text>
                             <Binding Path="RebarCoverDown" UpdateSourceTrigger="PropertyChanged" ValidatesOnDataErrors="True" ValidatesOnExceptions="True">
                                 <Binding.ValidationRules>

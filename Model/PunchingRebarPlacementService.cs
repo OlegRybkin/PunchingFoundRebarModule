@@ -1,15 +1,9 @@
 ﻿using Autodesk.Revit.DB;
-using Autodesk.Revit.DB.Structure;
 using Autodesk.Revit.UI;
 using RevitTools;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Controls;
-using System.Xml.Linq;
 
 namespace PunchingFoundRebarModule.Model
 {
@@ -17,8 +11,8 @@ namespace PunchingFoundRebarModule.Model
     {
         static internal void AddPunchingRebarToFoundation(Document doc, Slab slab, Column column, RebarParameters rebarParameters)
         {
-            string familyName = "IFC_Каркас_КГор_1";
-            string familyType = "Х_1501";
+            string familyName = rebarParameters.FamilyName;
+            string familyType = rebarParameters.FamilyType;
 
             double longRebarDiameter = Calculator.FromMmToFeet(10); // диаметр продольной арматуры каркаса
 

@@ -1,18 +1,12 @@
 ﻿using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
-using Autodesk.Revit.DB.Structure;
 using Autodesk.Revit.UI;
-using Autodesk.Revit.UI.Events;
 using Autodesk.Revit.UI.Selection;
 using PunchingFoundRebarModule.View;
 using PunchingFoundRebarModule.ViewModel;
 using RevitTools;
 using System;
 using System.Collections.Generic;
-using System.Data.Common;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 
 namespace PunchingFoundRebarModule.Model
@@ -93,6 +87,9 @@ namespace PunchingFoundRebarModule.Model
 
                     RebarParameters rebarParameters = new RebarParameters()
                     {
+                        FamilyName = mainWindowVM.FamilyName,
+                        FamilyType = mainWindowVM.FamilyType,
+
                         RebarDiameter = Calculator.FromMmToFeet(mainWindowVM.RebarDiameter),
                         RebarClass = mainWindowVM.RebarClass,
                         StirrupStep = Calculator.FromMmToFeet(mainWindowVM.StirrupStep),

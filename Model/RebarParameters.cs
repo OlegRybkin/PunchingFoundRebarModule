@@ -1,14 +1,10 @@
-﻿using RevitTools;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace PunchingFoundRebarModule.Model
+﻿namespace PunchingFoundRebarModule.Model
 {
     internal class RebarParameters
     {
+        internal string FamilyName { get; set; }
+        internal string FamilyType { get; set; }
+
         internal double RebarDiameter { get; set; }
         internal int RebarClass { get; set; }
         internal double StirrupStep { get; set; }
